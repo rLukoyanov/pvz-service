@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
 	"pvz-service/config"
 	"pvz-service/internal/database"
 	"pvz-service/internal/logger"
+
+	"github.com/labstack/echo"
 )
 
 func main() {
@@ -22,5 +23,9 @@ func main() {
 	// init db
 	pool := database.ConnectDB(cfg, ctx)
 	_ = pool
-	log.Println("test docker")
+	// init echo
+	e := echo.New()
+	e.Logger.Fatal(e.Start(":8080"))
+
+	//graseful shutdown
 }
