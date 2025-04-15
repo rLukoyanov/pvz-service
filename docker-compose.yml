@@ -34,6 +34,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - POSTGRES_DSN=postgresql://root:123x123@postgres:5432/base?sslmode=disable
+      - DATABASE_URL=postgresql://root:123x123@postgres:5432/base?sslmode=disable
       - LOG_LEVEL=debug
     command: ["/app/pvz-service"]
