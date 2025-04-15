@@ -1,6 +1,9 @@
 package main
 
-import "pvz-service/config"
+import (
+	"log"
+	"pvz-service/config"
+)
 
 func main() {
 	// init config
@@ -13,4 +16,5 @@ func main() {
 	// init logger
 
 	// init db
+	log.Println("test docker")
 }

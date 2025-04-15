@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123x123
+      POSTGRES_DB: base
+    ports:
+      - "5432:5432"
+
+  migrations:
+    image: alpine:latest
+    working_dir: /app/migrations
+    volumes:
+      - ./migrations:/app/migrations
+    depends_on:
+      - postgres
+    entrypoint: >
+      sh -c "
+      apk add --no-cache curl bash &&
+      curl -fsSL https://raw.githubusercontent.com/pressly/goose/master/install.sh | sh &&
+      /usr/local/bin/goose -dir /app/migrations postgres 'postgres://root:123x123@postgres:5432/base?sslmode=disable' up
+      "
+
+  pvz-service:
+    image: alpine:latest
+    working_dir: /app
+    volumes:
+      - ./pvz-service:/app/pvz-service  
+      - ./logs:/app/logs
+    ports:
+      - "3003:8080"
+    environment:
+      - POSTGRES_DSN=postgresql://root:123x123@postgres:5432/base?sslmode=disable
+      - LOG_LEVEL=debug
+    command: ["/app/pvz-service"]
