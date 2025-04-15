@@ -6,6 +6,7 @@ import (
 	"pvz-service/internal/database"
 	"pvz-service/internal/handlers"
 	"pvz-service/internal/logger"
+	"pvz-service/internal/middlewares"
 	"pvz-service/internal/repositories"
 
 	"github.com/labstack/echo/v4"
@@ -28,6 +29,8 @@ func main() {
 	// init echo
 	e := echo.New()
 
+	authMiddleware := middlewares.NewAuthMiddleware(cfg)
+
 	dlHandler := handlers.NewDummyLoginHandler(cfg)
 	e.POST("/dummyLogin", dlHandler.DummyLogin)
 
@@ -35,6 +38,13 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authRepo, cfg)
 	e.POST("/register", authHandler.Register)
 	e.POST("/login", authHandler.Login)
+
+	g := e.Group("/pvz")
+	g.Use(authMiddleware.JWTMiddleware())
+	pvzRepo := repositories.NewPVZRepository(pool)
+	pvzHandler := handlers.NewPVZHandler(pvzRepo)
+
+	g.POST("/", pvzHandler.Create, authMiddleware.RequireRole("moderator"))
 
 	e.Logger.Fatal(e.Start(":8080"))
 
