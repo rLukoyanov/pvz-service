@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"pvz-service/config"
+	"pvz-service/internal/logger"
 )
 
 func main() {
@@ -14,6 +15,7 @@ func main() {
 	_ = cfg
 
 	// init logger
+	logger.InitLogger(cfg.LOG_LEVEL, cfg.MODE)
 
 	// init db
 	log.Println("test docker")
