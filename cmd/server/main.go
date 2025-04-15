@@ -6,6 +6,7 @@ import (
 	"pvz-service/internal/database"
 	"pvz-service/internal/handlers"
 	"pvz-service/internal/logger"
+	"pvz-service/internal/repositories"
 
 	"github.com/labstack/echo/v4"
 )
@@ -29,6 +30,11 @@ func main() {
 
 	dlHandler := handlers.NewDummyLoginHandler(cfg)
 	e.POST("/dummyLogin", dlHandler.DummyLogin)
+
+	authRepo := repositories.NewUserRepository(pool)
+	authHandler := handlers.NewAuthHandler(authRepo, cfg)
+	e.POST("/register", authHandler.Register)
+	e.POST("/login", authHandler.Login)
 
 	e.Logger.Fatal(e.Start(":8080"))
 
