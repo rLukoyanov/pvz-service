@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE receptions (
+CREATE TABLE intake (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     date_time TIMESTAMPTZ NOT NULL DEFAULT now(),
     pvz_id UUID NOT NULL REFERENCES pvz(id) ON DELETE CASCADE,
@@ -7,4 +7,4 @@ CREATE TABLE receptions (
 );
 
 -- +goose Down
-DROP TABLE IF EXISTS receptions;
+DROP TABLE IF EXISTS intake;
