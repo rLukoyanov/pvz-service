@@ -19,9 +19,19 @@ func NewDummyLoginHandler(cfg *config.Config) *DummyLoginHandler {
 	}
 }
 
+// @Summary Получение тестового токена
+// @Description Получение тестового токена для разработки
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body object true "User role data"
+// @Param role body string true "User role" Enums(employee,moderator)
+// @Success 200 {object} string "Token"
+// @Failure 400 {object} map[string]string "Error message"
+// @Router /dummyLogin [post]
 func (h *DummyLoginHandler) DummyLogin(c echo.Context) error {
 	type req struct {
-		Role string `json:"role"`
+		Role string `json:"role" enums:"employee,moderator"`
 	}
 
 	var r req

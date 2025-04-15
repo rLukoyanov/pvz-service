@@ -27,6 +27,15 @@ type registerRequest struct {
 	Role     string `json:"role"`
 }
 
+// @Summary Регистрация пользователя
+// @Description Создание нового пользователя с email, паролем и ролью
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body registerRequest true "User registration data"
+// @Success 201 {object} models.User
+// @Failure 400 {object} map[string]string
+// @Router /register [post]
 func (h *AuthHandler) Register(c echo.Context) error {
 	var req registerRequest
 	if err := c.Bind(&req); err != nil {
@@ -66,6 +75,15 @@ type loginRequest struct {
 	Password string `json:"password"`
 }
 
+// @Summary Авторизация пользователя
+// @Description Аутентификация пользователя и получение JWT токена
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body loginRequest true "User login data"
+// @Success 200 {object} string "Token"
+// @Failure 401 {object} map[string]string
+// @Router /login [post]
 func (h *AuthHandler) Login(c echo.Context) error {
 	var req loginRequest
 	if err := c.Bind(&req); err != nil {

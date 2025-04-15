@@ -29,6 +29,9 @@ func main() {
 	// init echo
 	e := echo.New()
 
+	// Register Swagger
+	handlers.RegisterSwagger(e)
+
 	authMiddleware := middlewares.NewAuthMiddleware(cfg)
 
 	dlHandler := handlers.NewDummyLoginHandler(cfg)
@@ -45,8 +48,11 @@ func main() {
 	pvzHandler := handlers.NewPVZHandler(pvzRepo)
 
 	g.POST("/", pvzHandler.Create, authMiddleware.RequireRole("moderator"))
+	g.GET("/:id", pvzHandler.GetByID)
+	g.PUT("/:id", pvzHandler.Update, authMiddleware.RequireRole("moderator"))
+	g.DELETE("/:id", pvzHandler.Delete, authMiddleware.RequireRole("moderator"))
 
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":8081"))
 
 	//graseful shutdown
 }
