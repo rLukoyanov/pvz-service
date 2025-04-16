@@ -49,10 +49,13 @@ func main() {
 
 	g.POST("/", pvzHandler.Create, authMiddleware.RequireRole("moderator"))
 	g.GET("/:id", pvzHandler.GetByID)
-	g.PUT("/:id", pvzHandler.Update, authMiddleware.RequireRole("moderator"))
-	g.DELETE("/:id", pvzHandler.Delete, authMiddleware.RequireRole("moderator"))
 
-	e.Logger.Fatal(e.Start(":8081"))
+	// Intake endpoints
+	intakeRepo := repositories.NewIntakeRepository(pool)
+	intakeHandler := handlers.NewIntakeHandler(intakeRepo)
+	e.POST("/receptions", intakeHandler.Create, authMiddleware.JWTMiddleware(), authMiddleware.RequireRole("client"))
+
+	e.Logger.Fatal(e.Start(":8080"))
 
 	//graseful shutdown
 }

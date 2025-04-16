@@ -17,11 +17,15 @@ const docTemplate = `{
     "paths": {
         "/dummyLogin": {
             "post": {
+                "description": "Получение тестового токена для разработки",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "auth"
                 ],
                 "summary": "Получение тестового токена",
                 "parameters": [
@@ -32,6 +36,19 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "type": "object"
+                        }
+                    },
+                    {
+                        "description": "User role",
+                        "name": "role",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "employee",
+                                "moderator"
+                            ]
                         }
                     }
                 ],
@@ -56,7 +73,7 @@ const docTemplate = `{
         },
         "/login": {
             "post": {
-                "description": "Authenticate user and return JWT token",
+                "description": "Аутентификация пользователя и получение JWT токена",
                 "consumes": [
                     "application/json"
                 ],
@@ -66,7 +83,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Login user",
+                "summary": "Авторизация пользователя",
                 "parameters": [
                     {
                         "description": "User login data",
@@ -80,12 +97,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Token",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "type": "string"
                         }
                     },
                     "401": {
@@ -107,13 +121,17 @@ const docTemplate = `{
                         "bearerAuth": []
                     }
                 ],
+                "description": "Создание нового пункта выдачи заказов (только для модераторов)",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Создание ПВЗ (только для модераторов)",
+                "tags": [
+                    "pvz"
+                ],
+                "summary": "Создание ПВЗ",
                 "parameters": [
                     {
                         "description": "PVZ data",
@@ -153,9 +171,243 @@ const docTemplate = `{
                 }
             }
         },
+        "/pvz/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Получение информации о пункте выдачи заказов по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pvz"
+                ],
+                "summary": "Получение ПВЗ по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "PVZ ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.PVZ"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Обновление информации о пункте выдачи заказов (только для модераторов)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pvz"
+                ],
+                "summary": "Обновление ПВЗ",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "PVZ ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "PVZ data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.PVZ"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.PVZ"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Удаление пункта выдачи заказов (только для модераторов)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pvz"
+                ],
+                "summary": "Удаление ПВЗ",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "PVZ ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/receptions": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Создание новой приемки товаров (только для сотрудников ПВЗ)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "intake"
+                ],
+                "summary": "Создание новой приемки товаров",
+                "parameters": [
+                    {
+                        "description": "Intake data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    {
+                        "format": "uuid",
+                        "description": "PVZ ID",
+                        "name": "pvzId",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Intake"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/register": {
             "post": {
-                "description": "Register a new user with email, password and role",
+                "description": "Создание нового пользователя с email, паролем и ролью",
                 "consumes": [
                     "application/json"
                 ],
@@ -165,7 +417,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Register a new user",
+                "summary": "Регистрация пользователя",
                 "parameters": [
                     {
                         "description": "User registration data",
@@ -219,6 +471,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Intake": {
+            "type": "object",
+            "properties": {
+                "DateTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "pvzId": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
