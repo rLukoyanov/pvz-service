@@ -110,3 +110,42 @@ func (r *PVZRepository) DeletePVZ(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (r *PVZRepository) DeleteLastInserted(ctx context.Context, id string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	query, args, err := r.psql.
+		Delete("products").
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	query, args, err = r.psql.
+		Delete("products").
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	result, err := tx.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return echo.NewHTTPError(http.StatusNotFound, "PVZ not found")
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}

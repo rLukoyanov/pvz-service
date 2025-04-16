@@ -7,7 +7,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sirupsen/logrus"
 )
 
 type UserRepository struct {
@@ -34,8 +33,6 @@ func (r *UserRepository) CreateUser(ctx context.Context, user models.User) error
 	if err != nil {
 		return err
 	}
-
-	logrus.Debug(query)
 
 	_, err = tx.Exec(ctx, query, args...)
 	if err != nil {

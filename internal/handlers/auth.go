@@ -2,9 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"pvz-service/config"
 	"pvz-service/internal/models"
-	"pvz-service/internal/repositories"
+	"pvz-service/internal/services"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -13,12 +12,11 @@ import (
 )
 
 type AuthHandler struct {
-	Repo *repositories.UserRepository
-	cfg  *config.Config
+	services *services.Services
 }
 
-func NewAuthHandler(repo *repositories.UserRepository, cfg *config.Config) *AuthHandler {
-	return &AuthHandler{Repo: repo, cfg: cfg}
+func NewAuthHandler(services *services.Services) *AuthHandler {
+	return &AuthHandler{services: services}
 }
 
 type registerRequest struct {
@@ -40,17 +38,17 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	var req registerRequest
 	if err := c.Bind(&req); err != nil {
 		logrus.Error(err)
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "invalid body"})
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid body"})
 	}
 
 	if req.Role != "client" && req.Role != "moderator" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "invalid role"})
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid role"})
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		logrus.Error(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "encryption error"})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "encryption error"})
 	}
 
 	user := models.User{
@@ -60,14 +58,14 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	}
 
 	logrus.Debug("creating user", user)
-	err = h.Repo.CreateUser(c.Request().Context(), user)
+	err = h.services.UserService.CreateUser(c.Request().Context(), user)
 	if err != nil {
 		logrus.Error(err)
 		// TODO - добавить разные варианты ошибок
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "can not create user"})
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "can not create user"})
 	}
 
-	return c.JSON(http.StatusCreated, map[string]string{"email": user.Email, "role": user.Role})
+	return c.JSON(http.StatusCreated, echo.Map{"email": user.Email, "role": user.Role})
 }
 
 type loginRequest struct {
@@ -87,16 +85,16 @@ type loginRequest struct {
 func (h *AuthHandler) Login(c echo.Context) error {
 	var req loginRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "invalid body"})
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid body"})
 	}
 
-	user, err := h.Repo.GetUserByEmail(c.Request().Context(), req.Email)
+	user, err := h.services.UserService.GetUserByEmail(c.Request().Context(), req.Email)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid credentials"})
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "invalid credentials"})
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid credentials"})
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "invalid credentials"})
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -104,10 +102,10 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		"role":  user.Role,
 	})
 
-	signed, err := token.SignedString([]byte(h.cfg.SECRET))
+	signed, err := token.SignedString([]byte(h.services.Cfg.SECRET))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "token error"})
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "token error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"token": signed})
+	return c.JSON(http.StatusOK, echo.Map{"token": signed})
 }

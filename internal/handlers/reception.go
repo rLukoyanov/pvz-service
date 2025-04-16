@@ -3,18 +3,18 @@ package handlers
 import (
 	"net/http"
 	"pvz-service/internal/models"
-	"pvz-service/internal/repositories"
+	"pvz-service/internal/services"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
 
 type ReceptionHandler struct {
-	Repo *repositories.ReceptionRepository
+	services *services.Services
 }
 
-func NewReceptionHandler(repo *repositories.ReceptionRepository) *ReceptionHandler {
-	return &ReceptionHandler{Repo: repo}
+func NewReceptionHandler(services *services.Services) *ReceptionHandler {
+	return &ReceptionHandler{services: services}
 }
 
 // @Summary Создание новой приемки товаров
@@ -34,17 +34,17 @@ func (h *ReceptionHandler) Create(c echo.Context) error {
 	}
 	if err := c.Bind(&req); err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "invalid body"})
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{"message": "invalid body"})
 	}
 
-	active, err := h.Repo.GetActiveReceptionByPVZID(c.Request().Context(), req.PvzId)
+	active, err := h.services.ReceptionService.GetActiveReceptionByPVZID(c.Request().Context(), req.PvzId)
 	if err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{"message": "could not create Reception"})
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{"message": "Неверный запрос или есть незакрытая приемка"})
 	}
 
 	if active != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "there is an active Reception for this PVZ"})
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{"message": "there is an active Reception for this PVZ"})
 	}
 
 	Reception := models.Reception{
@@ -52,11 +52,11 @@ func (h *ReceptionHandler) Create(c echo.Context) error {
 		Status: "in_progress",
 	}
 
-	err = h.Repo.CreateReception(c.Request().Context(), Reception)
+	err = h.services.ReceptionService.CreateReception(c.Request().Context(), Reception)
 	if err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{"message": "could not create Reception"})
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{"message": "could not create Reception"})
 	}
 
-	return c.JSON(http.StatusCreated, map[string]string{"message": "created"})
+	return c.JSON(http.StatusCreated, echo.Map{"message": "created"})
 }

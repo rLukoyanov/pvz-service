@@ -3,19 +3,18 @@ package handlers
 import (
 	"net/http"
 	"pvz-service/internal/models"
-	"pvz-service/internal/repositories"
-	"strings"
+	"pvz-service/internal/services"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
 
 type PVZHandler struct {
-	Repo *repositories.PVZRepository
+	services *services.Services
 }
 
-func NewPVZHandler(repo *repositories.PVZRepository) *PVZHandler {
-	return &PVZHandler{Repo: repo}
+func NewPVZHandler(services *services.Services) *PVZHandler {
+	return &PVZHandler{services: services}
 }
 
 // @Summary Создание ПВЗ
@@ -33,25 +32,13 @@ func (h *PVZHandler) Create(c echo.Context) error {
 	var pvz models.PVZ
 	if err := c.Bind(&pvz); err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "invalid body"})
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{"message": "invalid body"})
 	}
 
-	pvz.City = strings.ToLower(pvz.City)
-
-	allowedCities := map[string]bool{
-		"москва":          true,
-		"санкт-Петербург": true,
-		"казань":          true,
-	}
-
-	if _, ok := allowedCities[pvz.City]; !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "city not allowed"})
-	}
-
-	created, err := h.Repo.CreatePVZ(c.Request().Context(), pvz)
+	created, err := h.services.PvzService.CreatePVZ(c.Request().Context(), pvz)
 	if err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{"message": "could not create PVZ"})
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{"message": "could not create PVZ"})
 	}
 
 	return c.JSON(http.StatusCreated, created)
@@ -69,11 +56,32 @@ func (h *PVZHandler) Create(c echo.Context) error {
 // @Router /pvz/{id} [get]
 func (h *PVZHandler) GetByID(c echo.Context) error {
 	id := c.Param("id")
-	pvz, err := h.Repo.GetPVZByID(c.Request().Context(), id)
+	pvz, err := h.services.PvzService.GetPVZByID(c.Request().Context(), id)
 	if err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusNotFound, map[string]string{"message": "PVZ not found"})
+		return echo.NewHTTPError(http.StatusNotFound, echo.Map{"message": "PVZ not found"})
 	}
 
 	return c.JSON(http.StatusOK, pvz)
+}
+
+// @Summary Удаление последнего добавленного товара
+// @Description Удаление последнего добавленного товара из текущей приемки (LIFO, только для сотрудников ПВЗ)
+// @Tags pvz
+// @Security bearerAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "PVZ ID"
+// @Success 200 {object} models.PVZ
+// @Failure 404 {object} map[string]string
+// @Router /pvz/{id}/delete_last_product [post]
+func (h *PVZHandler) DeleteLastProduct(c echo.Context) error {
+	id := c.Param("id")
+	err := h.services.PvzService.DeleteLastProduct(c.Request().Context(), id)
+	if err != nil {
+		logrus.Error(err)
+		return echo.NewHTTPError(http.StatusNotFound, echo.Map{"message": "PVZ not found"})
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{"message": "Товар удален"})
 }

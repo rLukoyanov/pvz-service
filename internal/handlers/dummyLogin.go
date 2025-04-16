@@ -2,20 +2,20 @@ package handlers
 
 import (
 	"net/http"
-	"pvz-service/config"
 	"pvz-service/internal/pkg/jwt"
+	"pvz-service/internal/services"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
 
 type DummyLoginHandler struct {
-	cfg *config.Config
+	services *services.Services
 }
 
-func NewDummyLoginHandler(cfg *config.Config) *DummyLoginHandler {
+func NewDummyLoginHandler(services *services.Services) *DummyLoginHandler {
 	return &DummyLoginHandler{
-		cfg: cfg,
+		services: services,
 	}
 }
 
@@ -45,7 +45,7 @@ func (h *DummyLoginHandler) DummyLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid role")
 	}
 
-	token, err := jwt.GenerateToken(r.Role, h.cfg)
+	token, err := jwt.GenerateToken(r.Role, h.services.Cfg)
 	if err != nil {
 		logrus.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "could not generate token")

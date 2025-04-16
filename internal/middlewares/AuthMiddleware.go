@@ -59,7 +59,7 @@ func (m *AuthMiddleware) RequireRole(required string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			role, ok := c.Get("role").(string)
 			if !ok || role != required {
-				return echo.NewHTTPError(http.StatusForbidden, "access denied")
+				return echo.NewHTTPError(http.StatusForbidden, "Доступ запрещен")
 			}
 			return next(c)
 		}

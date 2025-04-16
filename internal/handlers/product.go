@@ -3,20 +3,19 @@ package handlers
 import (
 	"net/http"
 	"pvz-service/internal/models"
-	"pvz-service/internal/repositories"
+	"pvz-service/internal/services"
 	"strings"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
 
 type ItemHandler struct {
-	repo *repositories.ProductRepository
+	services *services.Services
 }
 
-func NewProductHandler(repo *repositories.ProductRepository) *ItemHandler {
-	return &ItemHandler{repo: repo}
+func NewProductHandler(services *services.Services) *ItemHandler {
+	return &ItemHandler{services: services}
 }
 
 type req struct {
@@ -31,10 +30,9 @@ func (h *ItemHandler) AddProduct(c echo.Context) error {
 	}
 
 	product := models.Product{}
-	product.DateTime = time.Now().Format(time.UnixDate)
 	product.Type = strings.ToLower(req.Type)
 
-	if err := h.repo.AddProduct(c.Request().Context(), product, req.PvzId); err != nil {
+	if err := h.services.ProductService.AddProduct(c.Request().Context(), product, req.PvzId); err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "failed to add item"})
 	}
