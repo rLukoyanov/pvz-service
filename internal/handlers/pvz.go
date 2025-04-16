@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"pvz-service/internal/models"
 	"pvz-service/internal/repositories"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -35,13 +36,15 @@ func (h *PVZHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "invalid body"})
 	}
 
+	pvz.City = strings.ToLower(pvz.City)
+
 	allowedCities := map[string]bool{
-		"Москва":          true,
-		"Санкт-Петербург": true,
-		"Казань":          true,
+		"москва":          true,
+		"санкт-Петербург": true,
+		"казань":          true,
 	}
 
-	if !allowedCities[pvz.City] {
+	if _, ok := allowedCities[pvz.City]; !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "city not allowed"})
 	}
 

@@ -1,6 +1,6 @@
 package models
 
-type Intake struct {
+type Reception struct {
 	ID       string `json:"id"`
 	PvzId    string `json:"pvzId"`
 	Status   string `json:"status"`

@@ -50,10 +50,14 @@ func main() {
 	g.POST("/", pvzHandler.Create, authMiddleware.RequireRole("moderator"))
 	g.GET("/:id", pvzHandler.GetByID)
 
-	// Intake endpoints
-	intakeRepo := repositories.NewIntakeRepository(pool)
-	intakeHandler := handlers.NewIntakeHandler(intakeRepo)
-	e.POST("/receptions", intakeHandler.Create, authMiddleware.JWTMiddleware(), authMiddleware.RequireRole("client"))
+	// Reception endpoints
+	ReceptionRepo := repositories.NewReceptionRepository(pool)
+	ReceptionHandler := handlers.NewReceptionHandler(ReceptionRepo)
+	e.POST("/receptions", ReceptionHandler.Create, authMiddleware.JWTMiddleware(), authMiddleware.RequireRole("client"))
+
+	ProductRepo := repositories.NewProductRepository(pool)
+	productHandler := handlers.NewProductHandler(ProductRepo)
+	e.POST("/product", productHandler.AddProduct)
 
 	e.Logger.Fatal(e.Start(":8080"))
 

@@ -10,16 +10,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type IntakeRepository struct {
+type ReceptionRepository struct {
 	db   *pgxpool.Pool
 	psql sq.StatementBuilderType
 }
 
-func NewIntakeRepository(db *pgxpool.Pool) *IntakeRepository {
-	return &IntakeRepository{db: db, psql: sq.StatementBuilder.PlaceholderFormat(sq.Dollar)}
+func NewReceptionRepository(db *pgxpool.Pool) *ReceptionRepository {
+	return &ReceptionRepository{db: db, psql: sq.StatementBuilder.PlaceholderFormat(sq.Dollar)}
 }
 
-func (r *IntakeRepository) CreateIntake(ctx context.Context, intake models.Intake) error {
+func (r *ReceptionRepository) CreateReception(ctx context.Context, Reception models.Reception) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -27,9 +27,9 @@ func (r *IntakeRepository) CreateIntake(ctx context.Context, intake models.Intak
 	defer tx.Rollback(ctx)
 
 	query, args, err := r.psql.
-		Insert("intake").
+		Insert("Reception").
 		Columns("pvz_id", "status", "date_time").
-		Values(intake.PvzId, "in_progress", time.Now().Format(time.UnixDate)).
+		Values(Reception.PvzId, "in_progress", time.Now().Format(time.UnixDate)).
 		Suffix("RETURNING id, date_time, pvz_id, status").
 		ToSql()
 	if err != nil {
@@ -48,10 +48,10 @@ func (r *IntakeRepository) CreateIntake(ctx context.Context, intake models.Intak
 	return nil
 }
 
-func (r *IntakeRepository) GetActiveIntakeByPVZID(ctx context.Context, pvzID string) (*models.Intake, error) {
+func (r *ReceptionRepository) GetActiveReceptionByPVZID(ctx context.Context, pvzID string) (*models.Reception, error) {
 	query, args, err := r.psql.
 		Select("id", "date_time", "pvz_id", "status").
-		From("intake").
+		From("Reception").
 		Where(sq.Eq{"pvz_id": pvzID, "status": "in_progress"}).
 		ToSql()
 	if err != nil {
@@ -63,8 +63,8 @@ func (r *IntakeRepository) GetActiveIntakeByPVZID(ctx context.Context, pvzID str
 		return nil, nil
 	}
 
-	var intake models.Intake
-	err = row.Scan(&intake.ID, &intake.DateTime, &intake.PvzId, &intake.Status)
+	var Reception models.Reception
+	err = row.Scan(&Reception.ID, &Reception.DateTime, &Reception.PvzId, &Reception.Status)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
@@ -73,5 +73,5 @@ func (r *IntakeRepository) GetActiveIntakeByPVZID(ctx context.Context, pvzID str
 		return nil, err
 	}
 
-	return &intake, nil
+	return &Reception, nil
 }

@@ -9,27 +9,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type IntakeHandler struct {
-	Repo *repositories.IntakeRepository
+type ReceptionHandler struct {
+	Repo *repositories.ReceptionRepository
 }
 
-func NewIntakeHandler(repo *repositories.IntakeRepository) *IntakeHandler {
-	return &IntakeHandler{Repo: repo}
+func NewReceptionHandler(repo *repositories.ReceptionRepository) *ReceptionHandler {
+	return &ReceptionHandler{Repo: repo}
 }
 
 // @Summary Создание новой приемки товаров
 // @Description Создание новой приемки товаров (только для сотрудников ПВЗ)
-// @Tags intake
+// @Tags Reception
 // @Security bearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object true "Intake data"
-// @Param pvzId body string true "PVZ ID" Format(uuid)
-// @Success 201 {object} models.Intake
+// @Param request body models.Reception true "Reception data"
+// @Success 201 {object} models.Reception
 // @Failure 400 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Router /receptions [post]
-func (h *IntakeHandler) Create(c echo.Context) error {
+func (h *ReceptionHandler) Create(c echo.Context) error {
 	var req struct {
 		PvzId string `json:"pvzId"`
 	}
@@ -38,25 +37,25 @@ func (h *IntakeHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "invalid body"})
 	}
 
-	active, err := h.Repo.GetActiveIntakeByPVZID(c.Request().Context(), req.PvzId)
+	active, err := h.Repo.GetActiveReceptionByPVZID(c.Request().Context(), req.PvzId)
 	if err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{"message": "could not create intake"})
+		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{"message": "could not create Reception"})
 	}
 
 	if active != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "there is an active intake for this PVZ"})
+		return echo.NewHTTPError(http.StatusBadRequest, map[string]string{"message": "there is an active Reception for this PVZ"})
 	}
 
-	intake := models.Intake{
+	Reception := models.Reception{
 		PvzId:  req.PvzId,
 		Status: "in_progress",
 	}
 
-	err = h.Repo.CreateIntake(c.Request().Context(), intake)
+	err = h.Repo.CreateReception(c.Request().Context(), Reception)
 	if err != nil {
 		logrus.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{"message": "could not create intake"})
+		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{"message": "could not create Reception"})
 	}
 
 	return c.JSON(http.StatusCreated, map[string]string{"message": "created"})

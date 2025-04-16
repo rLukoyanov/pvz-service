@@ -17,22 +17,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupTestIntakeHandler(t *testing.T) (*handlers.IntakeHandler, *echo.Echo) {
+func setupTestReceptionHandler(t *testing.T) (*handlers.ReceptionHandler, *echo.Echo) {
 	cfg, err := config.NewConfig()
 	assert.NoError(t, err)
 
 	db, err := pgxpool.New(context.Background(), cfg.DATABASE_URL)
 	assert.NoError(t, err)
 
-	repo := repositories.NewIntakeRepository(db)
-	handler := handlers.NewIntakeHandler(repo)
+	repo := repositories.NewReceptionRepository(db)
+	handler := handlers.NewReceptionHandler(repo)
 
 	e := echo.New()
 	return handler, e
 }
 
-func TestIntakeHandler_Create(t *testing.T) {
-	handler, e := setupTestIntakeHandler(t)
+func TestReceptionHandler_Create(t *testing.T) {
+	handler, e := setupTestReceptionHandler(t)
 
 	validPayload := map[string]string{
 		"pvzId": "550e8400-e29b-41d4-a716-446655440000",
@@ -49,7 +49,7 @@ func TestIntakeHandler_Create(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
-		var resp models.Intake
+		var resp models.Reception
 		err = json.Unmarshal(rec.Body.Bytes(), &resp)
 		assert.NoError(t, err)
 		assert.Equal(t, "in_progress", resp.Status)

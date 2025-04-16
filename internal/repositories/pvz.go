@@ -80,37 +80,6 @@ func (r *PVZRepository) GetPVZByID(ctx context.Context, id string) (models.PVZ, 
 	return pvz, nil
 }
 
-func (r *PVZRepository) UpdatePVZ(ctx context.Context, id string, pvz models.PVZ) (models.PVZ, error) {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return models.PVZ{}, err
-	}
-	defer tx.Rollback(ctx)
-
-	query, args, err := r.psql.
-		Update("pvz").
-		Set("city", pvz.City).
-		Set("registration_date", pvz.RegistrationDate).
-		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, city, registration_date").
-		ToSql()
-	if err != nil {
-		return models.PVZ{}, err
-	}
-
-	var updated models.PVZ
-	err = tx.QueryRow(ctx, query, args...).Scan(&updated.ID, &updated.City, &updated.RegistrationDate)
-	if err != nil {
-		return models.PVZ{}, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return models.PVZ{}, err
-	}
-
-	return updated, nil
-}
-
 func (r *PVZRepository) DeletePVZ(ctx context.Context, id string) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
