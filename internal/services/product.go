@@ -42,13 +42,13 @@ func (s *ProductService) AddProduct(ctx context.Context, product models.Product,
 }
 
 func (s *ProductService) DeleteLastProduct(ctx context.Context, pvzID string) error {
-	active, err := s.repos.ReceptionRepo.GetActiveReceptionByPVZID(ctx, pvzID)
+	reception, err := s.repos.ReceptionRepo.GetActiveReceptionByPVZID(ctx, pvzID)
 	if err != nil {
 		return err
 	}
-	if active == nil {
+	if reception == nil {
 		return errors.ErrInvalidInput
 	}
 
-	return s.repos.ProductRepo.DeleteLastProduct(ctx, active.ID)
+	return s.repos.ProductRepo.DeleteLastProduct(ctx, reception.ID)
 }

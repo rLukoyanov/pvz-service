@@ -77,6 +77,7 @@ func (h *PVZHandler) GetByID(c echo.Context) error {
 // @Router /pvz/{id}/delete_last_product [post]
 func (h *PVZHandler) DeleteLastProduct(c echo.Context) error {
 	id := c.Param("id")
+	logrus.Info(id)
 	err := h.services.PvzService.DeleteLastProduct(c.Request().Context(), id)
 	if err != nil {
 		logrus.Error(err)

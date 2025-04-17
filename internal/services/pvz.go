@@ -41,5 +41,14 @@ func (s *PVZService) DeletePVZ(ctx context.Context, id string) error {
 }
 
 func (s *PVZService) DeleteLastProduct(ctx context.Context, id string) error {
-	return s.repos.PvzRepo.DeleteLastInserted(ctx, id)
+	pvz, err := s.repos.PvzRepo.GetPVZByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	reception, err := s.repos.ReceptionRepo.GetActiveReceptionByPVZID(ctx, pvz.ID)
+	if err != nil {
+		return err
+	}
+	return s.repos.ProductRepo.DeleteLastProduct(ctx, reception.ID)
 }

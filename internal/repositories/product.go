@@ -6,6 +6,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sirupsen/logrus"
 )
 
 type ProductRepository struct {
@@ -52,11 +53,18 @@ func (r *ProductRepository) DeleteLastProduct(ctx context.Context, receptionId s
 	}
 	defer tx.Rollback(ctx)
 
-	query, args, err := r.psql.Delete("products").
+	subQuery := r.psql.
+		Select("id").
+		From("products").
 		Where(sq.Eq{"reception_id": receptionId}).
 		OrderBy("date_time DESC").
-		Limit(1).
+		Limit(1)
+
+	query, args, err := r.psql.Delete("products").
+		Where(sq.Expr("id = (?)", subQuery)).
 		ToSql()
+
+	logrus.Info(query)
 	if err != nil {
 		return err
 	}
