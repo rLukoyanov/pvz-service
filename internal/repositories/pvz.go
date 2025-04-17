@@ -58,6 +58,7 @@ func (r *PVZRepository) GetPVZByID(ctx context.Context, id string) (models.PVZ, 
 	query, args, err := r.psql.
 		Select("id", "city", "registration_date").
 		From("pvz").
+		Where(sq.Eq{"id": id}).
 		ToSql()
 	if err != nil {
 		return models.PVZ{}, err
@@ -66,9 +67,6 @@ func (r *PVZRepository) GetPVZByID(ctx context.Context, id string) (models.PVZ, 
 	logrus.Debug(query)
 
 	row := r.db.QueryRow(ctx, query, args...)
-	if err != nil {
-		return models.PVZ{}, err
-	}
 
 	var pvz models.PVZ
 	if err := row.Scan(&pvz.ID, &pvz.City, &pvz.RegistrationDate); err != nil {
@@ -88,49 +86,6 @@ func (r *PVZRepository) DeletePVZ(ctx context.Context, id string) error {
 	query, args, err := r.psql.
 		Delete("pvz").
 		Where(sq.Eq{"id": id}).
-		ToSql()
-	if err != nil {
-		return err
-	}
-
-	result, err := tx.Exec(ctx, query, args...)
-	if err != nil {
-		return err
-	}
-
-	if result.RowsAffected() == 0 {
-		return echo.NewHTTPError(http.StatusNotFound, "PVZ not found")
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *PVZRepository) DeleteLastInserted(ctx context.Context, pvz_id string) error {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	query, args, err := r.psql.
-		Select("id").
-		From("reception").
-		Where(sq.Eq{"pvz_id": pvz_id, "status": "in_progress"}).
-		ToSql()
-	if err != nil {
-		return err
-	}
-	var reception_id string
-	tx.QueryRow(ctx, query, args...).Scan(&reception_id)
-
-	query, args, err = r.psql.
-		Delete("products").
-		Where(sq.Eq{"reception_id": reception_id}).
-		Limit(1).
 		ToSql()
 	if err != nil {
 		return err

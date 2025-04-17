@@ -65,8 +65,8 @@ func (h *PVZHandler) GetByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, pvz)
 }
 
-// @Summary Удаление последнего добавленного товара
-// @Description Удаление последнего добавленного товара из текущей приемки (LIFO, только для сотрудников ПВЗ)
+// @Summary Закрытие последней открытой приемки товаров в рамках ПВЗ
+// @Description Закрытие последней открытой приемки товаров в рамках ПВЗ
 // @Tags pvz
 // @Security bearerAuth
 // @Accept json
@@ -85,4 +85,16 @@ func (h *PVZHandler) DeleteLastProduct(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "Товар удален"})
+}
+
+func (h *PVZHandler) CloseLastReception(c echo.Context) error {
+	id := c.Param("id")
+	logrus.Info(id)
+	err := h.services.PvzService.CloseLastReception(c.Request().Context(), id)
+	if err != nil {
+		logrus.Error(err)
+		return echo.NewHTTPError(http.StatusNotFound, echo.Map{"message": "PVZ not found"})
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{"message": "Приемка закрыта"})
 }

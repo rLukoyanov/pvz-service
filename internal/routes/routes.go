@@ -46,6 +46,8 @@ func InitRoutes(e *echo.Echo, cfg *config.Config, db *pgxpool.Pool) {
 	receptionHandler := handlers.NewReceptionHandler(&services)
 	productHandler := handlers.NewProductHandler(&services)
 
+	e.Use(middlewares.LoggerMiddleware())
+
 	e.POST("/dummyLogin", dlHandler.DummyLogin)
 
 	e.POST("/register", authHandler.Register)
@@ -56,7 +58,8 @@ func InitRoutes(e *echo.Echo, cfg *config.Config, db *pgxpool.Pool) {
 
 	g.POST("/", pvzHandler.Create, authMiddleware.RequireRole("moderator"))
 	g.GET("/:id", pvzHandler.GetByID)
-	g.POST("/:id/delete_last_product", pvzHandler.DeleteLastProduct, authMiddleware.RequireRole("client"))
+	g.DELETE("/:id/delete_last_product", pvzHandler.DeleteLastProduct, authMiddleware.RequireRole("client"))
+	g.PUT("/:id/close_last_reception", pvzHandler.CloseLastReception, authMiddleware.RequireRole("client"))
 
 	e.POST("/receptions", receptionHandler.Create, authMiddleware.JWTMiddleware(), authMiddleware.RequireRole("client"))
 

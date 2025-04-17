@@ -35,7 +35,7 @@ func (s *ProductService) AddProduct(ctx context.Context, product models.Product,
 	}
 
 	if _, ok := allowedTypes[product.Type]; !ok {
-		return errors.ErrInvalidInput
+		return errors.ErrCategoryNotAllowed
 	}
 
 	return s.repos.ProductRepo.AddProduct(ctx, product)

@@ -6,6 +6,8 @@ import (
 	"pvz-service/internal/pkg/errors"
 	"pvz-service/internal/repositories"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 type PVZService struct {
@@ -50,5 +52,24 @@ func (s *PVZService) DeleteLastProduct(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+
+	if reception == nil {
+		return errors.ErrNoReceprionsFound
+	}
+
+	logrus.Info(pvz, reception)
 	return s.repos.ProductRepo.DeleteLastProduct(ctx, reception.ID)
+}
+
+func (s *PVZService) CloseLastReception(ctx context.Context, id string) error {
+	reception, err := s.repos.ReceptionRepo.GetActiveReceptionByPVZID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if reception == nil {
+		return errors.ErrNoReceprionsFound
+	}
+
+	return s.repos.ReceptionRepo.CloseReception(ctx, reception.ID)
 }

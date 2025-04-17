@@ -17,7 +17,6 @@ func NewReceptionService(repos *repositories.Repos) *ReceptionService {
 }
 
 func (s *ReceptionService) CreateReception(ctx context.Context, reception models.Reception) error {
-	// Check if there's an active reception for this PVZ
 	active, err := s.repos.ReceptionRepo.GetActiveReceptionByPVZID(ctx, reception.PvzId)
 	if err != nil {
 		return err
@@ -26,7 +25,6 @@ func (s *ReceptionService) CreateReception(ctx context.Context, reception models
 		return errors.ErrInvalidInput
 	}
 
-	// Set default values
 	reception.DateTime = time.Now()
 	reception.Status = "in_progress"
 

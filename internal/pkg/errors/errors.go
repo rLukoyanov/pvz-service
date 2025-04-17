@@ -3,7 +3,9 @@ package errors
 import "errors"
 
 var (
-	ErrCityNotAllowed = errors.New("city not allowed")
-	ErrNotFound       = errors.New("not found")
-	ErrInvalidInput   = errors.New("invalid input")
+	ErrCityNotAllowed     = errors.New("недопустимый город")
+	ErrCategoryNotAllowed = errors.New("недопустимая категория")
+	ErrNotFound           = errors.New("не найдено")
+	ErrInvalidInput       = errors.New("не верный ввод")
+	ErrNoReceprionsFound  = errors.New("не нашли открытых приемок")
 )

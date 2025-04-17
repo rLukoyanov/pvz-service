@@ -75,3 +75,28 @@ func (r *ReceptionRepository) GetActiveReceptionByPVZID(ctx context.Context, pvz
 
 	return &Reception, nil
 }
+
+func (r *ReceptionRepository) CloseReception(ctx context.Context, receptionId string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	query, args, err := r.psql.Update("reception").
+		Set("status", "close").
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
