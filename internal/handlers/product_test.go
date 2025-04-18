@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockProductService is a mock implementation of the Product service
 type MockProductService struct {
 	mock.Mock
 }
@@ -43,7 +42,6 @@ func setupProductEcho() (*echo.Echo, *MockProductService, *ItemHandler) {
 func TestItemHandler_AddProduct(t *testing.T) {
 	e, mockService, handler := setupProductEcho()
 
-	// Test case 1: Successful product addition
 	t.Run("successful product addition", func(t *testing.T) {
 		reqBody := map[string]string{
 			"type":  "electronics",
@@ -69,7 +67,6 @@ func TestItemHandler_AddProduct(t *testing.T) {
 		assert.Equal(t, "created", response["message"])
 	})
 
-	// Test case 2: Invalid request body
 	t.Run("invalid request body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/products", strings.NewReader("invalid json"))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -81,7 +78,6 @@ func TestItemHandler_AddProduct(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 3: Missing required fields
 	t.Run("missing required fields", func(t *testing.T) {
 		reqBody := map[string]string{
 			"type": "electronics",
@@ -98,7 +94,6 @@ func TestItemHandler_AddProduct(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 4: Service error
 	t.Run("service error", func(t *testing.T) {
 		reqBody := map[string]string{
 			"type":  "electronics",

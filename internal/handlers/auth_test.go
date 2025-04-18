@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockUserService is a mock implementation of the User service
 type MockUserService struct {
 	mock.Mock
 }
@@ -43,7 +42,6 @@ func setupAuthEcho() (*echo.Echo, *MockUserService, *AuthHandler) {
 func TestAuthHandler_Register(t *testing.T) {
 	e, mockService, handler := setupAuthEcho()
 
-	// Test case 1: Successful registration
 	t.Run("successful registration", func(t *testing.T) {
 		reqBody := map[string]string{
 			"email":    "test@example.com",
@@ -71,7 +69,6 @@ func TestAuthHandler_Register(t *testing.T) {
 		assert.Equal(t, "client", response["role"])
 	})
 
-	// Test case 2: Invalid request body
 	t.Run("invalid request body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader("invalid json"))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -83,7 +80,6 @@ func TestAuthHandler_Register(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 3: Invalid role
 	t.Run("invalid role", func(t *testing.T) {
 		reqBody := map[string]string{
 			"email":    "test@example.com",
@@ -102,7 +98,6 @@ func TestAuthHandler_Register(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 4: Service error
 	t.Run("service error", func(t *testing.T) {
 		reqBody := map[string]string{
 			"email":    "test@example.com",
@@ -128,7 +123,6 @@ func TestAuthHandler_Register(t *testing.T) {
 func TestAuthHandler_Login(t *testing.T) {
 	e, mockService, handler := setupAuthEcho()
 
-	// Test case 1: Successful login
 	t.Run("successful login", func(t *testing.T) {
 		reqBody := map[string]string{
 			"email":    "test@example.com",
@@ -138,7 +132,7 @@ func TestAuthHandler_Login(t *testing.T) {
 
 		user := models.User{
 			Email:    "test@example.com",
-			Password: "$2a$10$hashedpassword", // bcrypt hash of "password123"
+			Password: "$2a$10$hashedpassword",
 			Role:     "client",
 		}
 		mockService.On("GetUserByEmail", mock.Anything, "test@example.com").
@@ -159,7 +153,6 @@ func TestAuthHandler_Login(t *testing.T) {
 		assert.NotEmpty(t, response["token"])
 	})
 
-	// Test case 2: Invalid request body
 	t.Run("invalid request body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("invalid json"))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -171,7 +164,6 @@ func TestAuthHandler_Login(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 3: User not found
 	t.Run("user not found", func(t *testing.T) {
 		reqBody := map[string]string{
 			"email":    "nonexistent@example.com",
@@ -192,7 +184,6 @@ func TestAuthHandler_Login(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
 
-	// Test case 4: Invalid password
 	t.Run("invalid password", func(t *testing.T) {
 		reqBody := map[string]string{
 			"email":    "test@example.com",
@@ -202,7 +193,7 @@ func TestAuthHandler_Login(t *testing.T) {
 
 		user := models.User{
 			Email:    "test@example.com",
-			Password: "$2a$10$hashedpassword", // bcrypt hash of "password123"
+			Password: "$2a$10$hashedpassword",
 			Role:     "client",
 		}
 		mockService.On("GetUserByEmail", mock.Anything, "test@example.com").

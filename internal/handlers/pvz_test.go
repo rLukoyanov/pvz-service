@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockPVZService is a mock implementation of the PVZ service
 type MockPVZService struct {
 	mock.Mock
 }

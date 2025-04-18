@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockReceptionService is a mock implementation of the Reception service
 type MockReceptionService struct {
 	mock.Mock
 }
@@ -46,7 +45,6 @@ func setupReceptionEcho() (*echo.Echo, *MockReceptionService, *ReceptionHandler)
 func TestReceptionHandler_Create(t *testing.T) {
 	e, mockService, handler := setupReceptionEcho()
 
-	// Test case 1: Successful reception creation
 	t.Run("successful reception creation", func(t *testing.T) {
 		reqBody := map[string]string{
 			"pvzId": "1",
@@ -73,7 +71,6 @@ func TestReceptionHandler_Create(t *testing.T) {
 		assert.Equal(t, "created", response["message"])
 	})
 
-	// Test case 2: Invalid request body
 	t.Run("invalid request body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/receptions", strings.NewReader("invalid json"))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -85,7 +82,6 @@ func TestReceptionHandler_Create(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 3: Active reception exists
 	t.Run("active reception exists", func(t *testing.T) {
 		reqBody := map[string]string{
 			"pvzId": "1",
@@ -109,7 +105,6 @@ func TestReceptionHandler_Create(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 4: Service error
 	t.Run("service error", func(t *testing.T) {
 		reqBody := map[string]string{
 			"pvzId": "1",

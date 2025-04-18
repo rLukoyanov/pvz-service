@@ -27,7 +27,6 @@ func setupDummyLoginEcho() (*echo.Echo, *DummyLoginHandler) {
 func TestDummyLoginHandler_DummyLogin(t *testing.T) {
 	e, handler := setupDummyLoginEcho()
 
-	// Test case 1: Successful token generation for client
 	t.Run("successful token generation for client", func(t *testing.T) {
 		reqBody := map[string]string{
 			"role": "client",
@@ -49,7 +48,6 @@ func TestDummyLoginHandler_DummyLogin(t *testing.T) {
 		assert.NotEmpty(t, response["token"])
 	})
 
-	// Test case 2: Successful token generation for moderator
 	t.Run("successful token generation for moderator", func(t *testing.T) {
 		reqBody := map[string]string{
 			"role": "moderator",
@@ -71,7 +69,6 @@ func TestDummyLoginHandler_DummyLogin(t *testing.T) {
 		assert.NotEmpty(t, response["token"])
 	})
 
-	// Test case 3: Invalid request body
 	t.Run("invalid request body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/dummyLogin", strings.NewReader("invalid json"))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -83,7 +80,6 @@ func TestDummyLoginHandler_DummyLogin(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// Test case 4: Invalid role
 	t.Run("invalid role", func(t *testing.T) {
 		reqBody := map[string]string{
 			"role": "invalid_role",
