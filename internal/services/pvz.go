@@ -2,10 +2,13 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"pvz-service/internal/models"
 	"pvz-service/internal/pkg/errors"
 	"pvz-service/internal/repositories"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -16,6 +19,41 @@ type PVZService struct {
 
 func NewPVZService(repos *repositories.Repos) *PVZService {
 	return &PVZService{repos: repos}
+}
+
+func (s *PVZService) GetAll(ctx context.Context, pageStr, limitStr, fromStr, toStr string) ([]models.PVZ, error) {
+
+	page := 1
+	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+		page = p
+	}
+	limit := 10
+	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+		limit = l
+	}
+
+	offset := (page - 1) * limit
+
+	var from, to time.Time
+	var err error
+
+	if fromStr != "" {
+		from, err = time.Parse("2006-01-02", fromStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid from date: %w", err)
+		}
+	}
+
+	if toStr != "" {
+		to, err = time.Parse("2006-01-02", toStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid to date: %w", err)
+		}
+	}
+
+	// TODO - добавить получение приемок и их товаров
+
+	return s.repos.PvzRepo.GetAll(ctx, limit, offset, from, to)
 }
 
 func (s *PVZService) CreatePVZ(ctx context.Context, pvz models.PVZ) (models.PVZ, error) {

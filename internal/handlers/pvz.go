@@ -17,6 +17,28 @@ func NewPVZHandler(services *services.Services) *PVZHandler {
 	return &PVZHandler{services: services}
 }
 
+func (h *PVZHandler) GetAll(c echo.Context) error {
+	from := c.QueryParam("from")
+	to := c.QueryParam("to")
+	page := c.QueryParam("page")
+	limit := c.QueryParam("limit")
+
+	pvzs, err := h.services.PvzService.GetAll(c.Request().Context(), page, limit, from, to)
+	if err != nil {
+		logrus.Error(err)
+		c.JSON(http.StatusBadRequest, echo.Map{
+			"Message": "invalid body",
+		})
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"data": pvzs,
+		"page": page,
+		"from": from,
+		"to":   to,
+	})
+}
+
 // @Summary Создание ПВЗ
 // @Description Создание нового пункта выдачи заказов (только для модераторов)
 // @Tags pvz

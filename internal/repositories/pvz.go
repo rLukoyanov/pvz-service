@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"pvz-service/internal/models"
 	"time"
@@ -19,6 +20,46 @@ type PVZRepository struct {
 
 func NewPVZRepository(db *pgxpool.Pool) *PVZRepository {
 	return &PVZRepository{db: db, psql: sq.StatementBuilder.PlaceholderFormat(sq.Dollar)}
+}
+
+func (r *PVZRepository) GetAll(ctx context.Context, limit, offset int, from, to time.Time) ([]models.PVZ, error) {
+	query := r.psql.
+		Select("DISTINCT pvz.id", "pvz.city", "pvz.registration_date").
+		From("pvz").
+		Join("reception ON pvz.id = reception.pvz_id")
+
+	if !from.IsZero() {
+		query = query.Where(sq.GtOrEq{"reception.date_time": from})
+	}
+	if !to.IsZero() {
+		query = query.Where(sq.LtOrEq{"reception.date_time": to})
+	}
+
+	query = query.OrderBy("pvz.registration_date DESC").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	sqlStr, args, err := query.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, sqlStr, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var result []models.PVZ
+	for rows.Next() {
+		var pvz models.PVZ
+		if err := rows.Scan(&pvz.ID, &pvz.City, &pvz.RegistrationDate); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		result = append(result, pvz)
+	}
+
+	return result, nil
 }
 
 func (r *PVZRepository) CreatePVZ(ctx context.Context, pvz models.PVZ) (models.PVZ, error) {
