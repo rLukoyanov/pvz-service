@@ -30,13 +30,31 @@ func (h *PVZHandler) GetAll(c echo.Context) error {
 			"Message": "invalid body",
 		})
 	}
-
-	return c.JSON(http.StatusOK, echo.Map{
+	response := echo.Map{
 		"data": pvzs,
-		"page": page,
-		"from": from,
-		"to":   to,
-	})
+	}
+
+	if page != "" {
+		response["page"] = page
+	} else {
+		response["page"] = 1
+	}
+
+	if from != "" {
+		response["from"] = from
+	}
+
+	if to != "" {
+		response["to"] = to
+	}
+
+	if limit != "" {
+		response["limit"] = limit
+	} else {
+		response["limit"] = 10
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // @Summary Создание ПВЗ

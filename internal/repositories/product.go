@@ -80,3 +80,32 @@ func (r *ProductRepository) DeleteLastProduct(ctx context.Context, receptionId s
 
 	return nil
 }
+
+func (r *ProductRepository) GetByReceptionID(ctx context.Context, receptionID string) ([]models.Product, error) {
+	query, args, err := r.psql.
+		Select("id", "date_time", "type").
+		From("products").
+		Where(sq.Eq{"reception_id": receptionID}).
+		OrderBy("date_time DESC").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var products []models.Product
+	for rows.Next() {
+		var p models.Product
+		if err := rows.Scan(&p.ID, &p.DateTime, &p.Type); err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+
+	return products, nil
+}

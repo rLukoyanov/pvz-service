@@ -22,9 +22,9 @@ func NewPVZRepository(db *pgxpool.Pool) *PVZRepository {
 	return &PVZRepository{db: db, psql: sq.StatementBuilder.PlaceholderFormat(sq.Dollar)}
 }
 
-func (r *PVZRepository) GetAll(ctx context.Context, limit, offset int, from, to time.Time) ([]models.PVZ, error) {
+func (r *PVZRepository) GetAll(ctx context.Context, limit, offset int, from, to time.Time) ([]models.FullPVZ, error) {
 	query := r.psql.
-		Select("DISTINCT pvz.id", "pvz.city", "pvz.registration_date").
+		Select("DISTINCT pvz.id", "pvz.city", "pvz.registration_date, reception.id, reception.date_time, reception.pvz_id, reception.status").
 		From("pvz").
 		Join("reception ON pvz.id = reception.pvz_id")
 
@@ -50,12 +50,18 @@ func (r *PVZRepository) GetAll(ctx context.Context, limit, offset int, from, to 
 	}
 	defer rows.Close()
 
-	var result []models.PVZ
+	var result []models.FullPVZ
 	for rows.Next() {
-		var pvz models.PVZ
-		if err := rows.Scan(&pvz.ID, &pvz.City, &pvz.RegistrationDate); err != nil {
+		var pvz models.FullPVZ
+		pvz.Receptions = make(map[string]models.FullReception)
+		var reseprion models.FullReception
+		if err := rows.Scan(&pvz.ID, &pvz.City, &pvz.RegistrationDate,
+			&reseprion.ID, &reseprion.DateTime, &reseprion.PvzId, &reseprion.Status); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
+
+		pvz.Receptions[reseprion.ID] = reseprion
+		reseprion.Products = make([]models.Product, 0)
 		result = append(result, pvz)
 	}
 

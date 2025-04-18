@@ -2,12 +2,12 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"pvz-service/internal/models"
 	"pvz-service/internal/pkg/errors"
 	"pvz-service/internal/repositories"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -21,7 +21,7 @@ func NewPVZService(repos *repositories.Repos) *PVZService {
 	return &PVZService{repos: repos}
 }
 
-func (s *PVZService) GetAll(ctx context.Context, pageStr, limitStr, fromStr, toStr string) ([]models.PVZ, error) {
+func (s *PVZService) GetAll(ctx context.Context, pageStr, limitStr, fromStr, toStr string) ([]models.FullPVZ, error) {
 
 	page := 1
 	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
@@ -40,20 +40,46 @@ func (s *PVZService) GetAll(ctx context.Context, pageStr, limitStr, fromStr, toS
 	if fromStr != "" {
 		from, err = time.Parse("2006-01-02", fromStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid from date: %w", err)
+			return nil, errors.ErrInvalidInput
 		}
 	}
 
 	if toStr != "" {
 		to, err = time.Parse("2006-01-02", toStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid to date: %w", err)
+			return nil, errors.ErrInvalidInput
 		}
 	}
 
 	// TODO - добавить получение приемок и их товаров
+	PVZs, err := s.repos.PvzRepo.GetAll(ctx, limit, offset, from, to)
+	if err != nil {
+		return nil, errors.ErrInvalidInput
+	}
 
-	return s.repos.PvzRepo.GetAll(ctx, limit, offset, from, to)
+	var wg sync.WaitGroup
+
+	for _, pvz := range PVZs {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			for key, reception := range pvz.Receptions {
+				prodcuts, err := s.repos.ProductRepo.GetByReceptionID(ctx, reception.ID)
+				if err != nil {
+					return
+				}
+
+				reception.Products = prodcuts
+				pvz.Receptions[key] = reception
+			}
+		}()
+
+	}
+
+	wg.Wait()
+
+	return PVZs, err
 }
 
 func (s *PVZService) CreatePVZ(ctx context.Context, pvz models.PVZ) (models.PVZ, error) {
