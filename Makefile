@@ -24,7 +24,7 @@ down:
 	@echo "Done!"
 
 build:
-	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BINARY_NAME} ./cmd/server/main.go
+	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BINARY_NAME} -ldflags="-s -w" ./cmd/server/main.go
 
 run:
 	go run ./cmd/main.go
