@@ -1,244 +1,380 @@
+swagger: "2.0"
+info:
+  title: PVZ Service API
+  description: API для управления пунктами выдачи заказов (ПВЗ)
+  version: "1.0.0"
+  contact:
+    name: API Support
+    email: support@example.com
+
 definitions:
   handlers.loginRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
     type: object
-  handlers.registerRequest:
+    required:
+      - email
+      - password
     properties:
       email:
         type: string
+        format: email
+        description: Email пользователя
       password:
         type: string
+        format: password
+        description: Пароль пользователя
+
+  handlers.registerRequest:
+    type: object
+    required:
+      - email
+      - password
+      - role
+    properties:
+      email:
+        type: string
+        format: email
+        description: Email пользователя
+      password:
+        type: string
+        format: password
+        description: Пароль пользователя
       role:
         type: string
+        enum: [employee, moderator]
+        description: Роль пользователя
+
+  models.User:
     type: object
-  models.Intake:
     properties:
-      DateTime:
-        type: string
       id:
         type: string
-      pvzId:
+        format: uuid
+        description: Уникальный идентификатор пользователя
+      email:
         type: string
-      status:
+        format: email
+        description: Email пользователя
+      role:
         type: string
-    type: object
+        enum: [employee, moderator]
+        description: Роль пользователя
+
   models.PVZ:
+    type: object
+    required:
+      - city
     properties:
+      id:
+        type: string
+        format: uuid
+        description: Уникальный идентификатор ПВЗ
       city:
         type: string
-      id:
-        type: string
+        description: Город, в котором находится ПВЗ
       registrationDate:
         type: string
+        format: date-time
+        description: Дата регистрации ПВЗ
+
+  models.Intake:
     type: object
-  models.User:
+    required:
+      - pvzId
+      - status
     properties:
-      email:
-        type: string
       id:
         type: string
-      role:
+        format: uuid
+        description: Уникальный идентификатор приемки
+      pvzId:
         type: string
+        format: uuid
+        description: ID ПВЗ, к которому относится приемка
+      status:
+        type: string
+        enum: [pending, completed, cancelled]
+        description: Статус приемки
+      DateTime:
+        type: string
+        format: date-time
+        description: Дата и время приемки
+
+  models.Product:
     type: object
-info:
-  contact: {}
+    required:
+      - name
+      - quantity
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Уникальный идентификатор товара
+      name:
+        type: string
+        description: Наименование товара
+      quantity:
+        type: integer
+        description: Количество товара
+
+securityDefinitions:
+  bearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: JWT токен для аутентификации
+
 paths:
   /dummyLogin:
     post:
-      consumes:
-      - application/json
+      tags:
+        - auth
+      summary: Получение тестового токена
       description: Получение тестового токена для разработки
-      parameters:
-      - description: User role data
-        in: body
-        name: request
-        required: true
-        schema:
-          type: object
-      - description: User role
-        in: body
-        name: role
-        required: true
-        schema:
-          enum:
-          - employee
-          - moderator
-          type: string
+      consumes:
+        - application/json
       produces:
-      - application/json
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          required: true
+          schema:
+            type: object
+            properties:
+              role:
+                type: string
+                enum: [employee, moderator]
+                description: Роль пользователя
       responses:
         "200":
-          description: Token
+          description: Успешное получение токена
           schema:
             type: string
         "400":
-          description: Error message
+          description: Ошибка в запросе
           schema:
+            type: object
             additionalProperties:
               type: string
-            type: object
-      summary: Получение тестового токена
-      tags:
-      - auth
+
   /login:
     post:
-      consumes:
-      - application/json
+      tags:
+        - auth
+      summary: Авторизация пользователя
       description: Аутентификация пользователя и получение JWT токена
-      parameters:
-      - description: User login data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.loginRequest'
+      consumes:
+        - application/json
       produces:
-      - application/json
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.loginRequest'
       responses:
         "200":
-          description: Token
+          description: Успешная авторизация
           schema:
             type: string
         "401":
-          description: Unauthorized
+          description: Неверные учетные данные
           schema:
+            type: object
             additionalProperties:
               type: string
-            type: object
-      summary: Авторизация пользователя
-      tags:
-      - auth
-  /pvz:
-    post:
-      consumes:
-      - application/json
-      description: Создание нового пункта выдачи заказов (только для модераторов)
-      parameters:
-      - description: PVZ data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/models.PVZ'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.PVZ'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - bearerAuth: []
-      summary: Создание ПВЗ
-      tags:
-      - pvz
-  /pvz/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Получение информации о пункте выдачи заказов по его ID
-      parameters:
-      - description: PVZ ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.PVZ'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - bearerAuth: []
-      summary: Получение ПВЗ по ID
-      tags:
-      - pvz
-  /receptions:
-    post:
-      consumes:
-      - application/json
-      description: Создание новой приемки товаров (только для сотрудников ПВЗ)
-      parameters:
-      - description: Intake data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/models.Intake'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.Intake'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - bearerAuth: []
-      summary: Создание новой приемки товаров
-      tags:
-      - intake
+
   /register:
     post:
-      consumes:
-      - application/json
+      tags:
+        - auth
+      summary: Регистрация пользователя
       description: Создание нового пользователя с email, паролем и ролью
-      parameters:
-      - description: User registration data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.registerRequest'
+      consumes:
+        - application/json
       produces:
-      - application/json
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.registerRequest'
       responses:
         "201":
-          description: Created
+          description: Пользователь успешно создан
           schema:
             $ref: '#/definitions/models.User'
         "400":
-          description: Bad Request
+          description: Ошибка в запросе
           schema:
+            type: object
             additionalProperties:
               type: string
-            type: object
-      summary: Регистрация пользователя
+
+  /pvz:
+    post:
       tags:
-      - auth
-swagger: "2.0"
+        - pvz
+      summary: Создание ПВЗ
+      description: Создание нового пункта выдачи заказов (только для модераторов)
+      security:
+        - bearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/models.PVZ'
+      responses:
+        "201":
+          description: ПВЗ успешно создан
+          schema:
+            $ref: '#/definitions/models.PVZ'
+        "400":
+          description: Ошибка в запросе
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        "403":
+          description: Доступ запрещен
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+
+  /pvz/{id}:
+    get:
+      tags:
+        - pvz
+      summary: Получение ПВЗ по ID
+      description: Получение информации о пункте выдачи заказов по его ID
+      security:
+        - bearerAuth: []
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: string
+          format: uuid
+          description: ID ПВЗ
+      responses:
+        "200":
+          description: Успешное получение информации о ПВЗ
+          schema:
+            $ref: '#/definitions/models.PVZ'
+        "404":
+          description: ПВЗ не найден
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+
+  /receptions:
+    post:
+      tags:
+        - intake
+      summary: Создание новой приемки товаров
+      description: Создание новой приемки товаров (только для сотрудников ПВЗ)
+      security:
+        - bearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/models.Intake'
+      responses:
+        "201":
+          description: Приемка успешно создана
+          schema:
+            $ref: '#/definitions/models.Intake'
+        "400":
+          description: Ошибка в запросе
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        "403":
+          description: Доступ запрещен
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+
+  /products:
+    post:
+      tags:
+        - products
+      summary: Создание нового товара
+      description: Создание нового товара в системе
+      security:
+        - bearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/models.Product'
+      responses:
+        "201":
+          description: Товар успешно создан
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Ошибка в запросе
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        "403":
+          description: Доступ запрещен
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+
+  /products/{id}:
+    get:
+      tags:
+        - products
+      summary: Получение товара по ID
+      description: Получение информации о товаре по его ID
+      security:
+        - bearerAuth: []
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: string
+          format: uuid
+          description: ID товара
+      responses:
+        "200":
+          description: Успешное получение информации о товаре
+          schema:
+            $ref: '#/definitions/models.Product'
+        "404":
+          description: Товар не найден
+          schema:
+            type: object
+            additionalProperties:
+              type: string

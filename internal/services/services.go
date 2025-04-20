@@ -1,11 +1,13 @@
 package services
 
-import "pvz-service/config"
+import (
+	"pvz-service/config"
+)
 
 type Services struct {
-	UserService      *UserService
-	ProductService   *ProductService
+	UserService      UserServiceInterface
+	ProductService   ProductServiceInterface
 	PvzService       PVZServiceInterface
-	ReceptionService *ReceptionService
+	ReceptionService ReceptionServiceInterface
 	Cfg              *config.Config
 }

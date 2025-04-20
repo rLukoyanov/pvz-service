@@ -25,13 +25,13 @@ func NewDummyLoginHandler(services *services.Services) *DummyLoginHandler {
 // @Accept json
 // @Produce json
 // @Param request body object true "User role data"
-// @Param role body string true "User role" Enums(employee,moderator)
+// @Param role body string true "User role"
 // @Success 200 {object} string "Token"
 // @Failure 400 {object} map[string]string "Error message"
 // @Router /dummyLogin [post]
 func (h *DummyLoginHandler) DummyLogin(c echo.Context) error {
 	type req struct {
-		Role string `json:"role" enums:"employee,moderator"`
+		Role string `json:"role"`
 	}
 
 	var r req

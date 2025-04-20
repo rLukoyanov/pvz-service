@@ -24,17 +24,23 @@ type req struct {
 }
 
 func (h *ItemHandler) AddProduct(c echo.Context) error {
-	req := req{}
-	if err := c.Bind(&req); err != nil || req.Type == "" || req.PvzId == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid request"})
+	var req req
+	if err := c.Bind(&req); err != nil {
+		logrus.Error("Failed to bind request:", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
-	product := models.Product{}
-	product.Type = strings.ToLower(req.Type)
+	if req.Type == "" || req.PvzId == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing required fields")
+	}
+
+	product := models.Product{
+		Type: strings.ToLower(req.Type),
+	}
 
 	if err := h.services.ProductService.AddProduct(c.Request().Context(), product, req.PvzId); err != nil {
-		logrus.Error(err)
-		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "failed to add item"})
+		logrus.Error("Failed to add product:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add product")
 	}
 
 	return c.JSON(http.StatusCreated, echo.Map{"message": "created"})

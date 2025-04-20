@@ -96,7 +96,6 @@ func TestPVZHandler_GetAll(t *testing.T) {
 		assert.Equal(t, "10", response["limit"])
 	})
 
-	// Test case 2: Error from service
 	t.Run("service error", func(t *testing.T) {
 		mockService.On("GetAll", mock.Anything, "", "", "", "").
 			Return([]models.FullPVZ{}, assert.AnError)
@@ -114,14 +113,13 @@ func TestPVZHandler_GetAll(t *testing.T) {
 func TestPVZHandler_Create(t *testing.T) {
 	e, mockService, handler := setupEcho()
 
-	// Test case 1: Successful creation
 	t.Run("successful creation", func(t *testing.T) {
 		pvz := models.PVZ{
 			ID:               "1",
 			RegistrationDate: time.Now(),
 			City:             "Moscow",
 		}
-		mockService.On("CreatePVZ", mock.Anything, pvz).
+		mockService.On("CreatePVZ", mock.Anything, mock.Anything).
 			Return(pvz, nil)
 
 		pvzJSON, _ := json.Marshal(pvz)
@@ -135,23 +133,27 @@ func TestPVZHandler_Create(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 	})
 
-	// Test case 2: Invalid request body
 	t.Run("invalid request body", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/pvz", strings.NewReader("invalid json"))
+		pvz := map[string]string{}
+		mockService.On("CreatePVZ", mock.Anything, mock.Anything).
+			Return(pvz, nil)
+
+		pvzJSON, _ := json.Marshal(pvz)
+		req := httptest.NewRequest(http.MethodPost, "/pvz", strings.NewReader(string(pvzJSON)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
 		err := handler.Create(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		httpErr, ok := err.(*echo.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
 	})
 }
 
 func TestPVZHandler_GetByID(t *testing.T) {
 	e, mockService, handler := setupEcho()
 
-	// Test case 1: Successful retrieval
 	t.Run("successful retrieval", func(t *testing.T) {
 		expectedPVZ := models.PVZ{
 			ID:               "1",
@@ -172,7 +174,6 @@ func TestPVZHandler_GetByID(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	// Test case 2: PVZ not found
 	t.Run("pvz not found", func(t *testing.T) {
 		mockService.On("GetPVZByID", mock.Anything, "2").
 			Return(models.PVZ{}, assert.AnError)
@@ -184,15 +185,15 @@ func TestPVZHandler_GetByID(t *testing.T) {
 		c.SetParamValues("2")
 
 		err := handler.GetByID(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusNotFound, rec.Code)
+		httpErr, ok := err.(*echo.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusNotFound, httpErr.Code)
 	})
 }
 
 func TestPVZHandler_DeleteLastProduct(t *testing.T) {
 	e, mockService, handler := setupEcho()
 
-	// Test case 1: Successful deletion
 	t.Run("successful deletion", func(t *testing.T) {
 		mockService.On("DeleteLastProduct", mock.Anything, "1").
 			Return(nil)
@@ -208,7 +209,6 @@ func TestPVZHandler_DeleteLastProduct(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	// Test case 2: PVZ not found
 	t.Run("pvz not found", func(t *testing.T) {
 		mockService.On("DeleteLastProduct", mock.Anything, "2").
 			Return(assert.AnError)
@@ -228,7 +228,6 @@ func TestPVZHandler_DeleteLastProduct(t *testing.T) {
 func TestPVZHandler_CloseLastReception(t *testing.T) {
 	e, mockService, handler := setupEcho()
 
-	// Test case 1: Successful closure
 	t.Run("successful closure", func(t *testing.T) {
 		mockService.On("CloseLastReception", mock.Anything, "1").
 			Return(nil)
@@ -244,7 +243,6 @@ func TestPVZHandler_CloseLastReception(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	// Test case 2: PVZ not found
 	t.Run("pvz not found", func(t *testing.T) {
 		mockService.On("CloseLastReception", mock.Anything, "2").
 			Return(assert.AnError)

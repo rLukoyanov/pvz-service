@@ -75,6 +75,11 @@ func (h *PVZHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{"message": "invalid body"})
 	}
 
+	if pvz.City == "" {
+		logrus.Error("no city")
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{"message": "invalid body"})
+	}
+
 	created, err := h.services.PvzService.CreatePVZ(c.Request().Context(), pvz)
 	if err != nil {
 		logrus.Error(err)

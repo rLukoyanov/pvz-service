@@ -36,7 +36,7 @@ func setupReceptionEcho() (*echo.Echo, *MockReceptionService, *ReceptionHandler)
 	e := echo.New()
 	mockService := new(MockReceptionService)
 	s := &services.Services{
-		ReceptionService: &services.ReceptionService{},
+		ReceptionService: mockService,
 	}
 	handler := NewReceptionHandler(s)
 	return e, mockService, handler

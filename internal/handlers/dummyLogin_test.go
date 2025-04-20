@@ -70,14 +70,18 @@ func TestDummyLoginHandler_DummyLogin(t *testing.T) {
 	})
 
 	t.Run("invalid request body", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/dummyLogin", strings.NewReader("invalid json"))
+		reqBody := map[string]string{}
+		reqJSON, _ := json.Marshal(reqBody)
+		req := httptest.NewRequest(http.MethodPost, "/dummyLogin", strings.NewReader(string(reqJSON)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
 		err := handler.DummyLogin(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Error(t, err)
+		httpErr, ok := err.(*echo.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
 	})
 
 	t.Run("invalid role", func(t *testing.T) {
@@ -92,7 +96,9 @@ func TestDummyLoginHandler_DummyLogin(t *testing.T) {
 		c := e.NewContext(req, rec)
 
 		err := handler.DummyLogin(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Error(t, err)
+		httpErr, ok := err.(*echo.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
 	})
 }

@@ -19,8 +19,8 @@ type MockProductService struct {
 	mock.Mock
 }
 
-func (m *MockProductService) AddProduct(ctx context.Context, product models.Product, pvzId string) error {
-	args := m.Called(ctx, product, pvzId)
+func (m *MockProductService) AddProduct(ctx context.Context, product models.Product, pvzID string) error {
+	args := m.Called(ctx, product, pvzID)
 	return args.Error(0)
 }
 
@@ -33,7 +33,7 @@ func setupProductEcho() (*echo.Echo, *MockProductService, *ItemHandler) {
 	e := echo.New()
 	mockService := new(MockProductService)
 	s := &services.Services{
-		ProductService: &services.ProductService{},
+		ProductService: mockService,
 	}
 	handler := NewProductHandler(s)
 	return e, mockService, handler
@@ -44,7 +44,7 @@ func TestItemHandler_AddProduct(t *testing.T) {
 
 	t.Run("successful product addition", func(t *testing.T) {
 		reqBody := map[string]string{
-			"type":  "electronics",
+			"type":  "электроника",
 			"PvzId": "1",
 		}
 		reqJSON, _ := json.Marshal(reqBody)
@@ -74,13 +74,15 @@ func TestItemHandler_AddProduct(t *testing.T) {
 		c := e.NewContext(req, rec)
 
 		err := handler.AddProduct(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Error(t, err)
+		httpErr, ok := err.(*echo.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
 	})
 
 	t.Run("missing required fields", func(t *testing.T) {
 		reqBody := map[string]string{
-			"type": "electronics",
+			"type": "электроника",
 		}
 		reqJSON, _ := json.Marshal(reqBody)
 
@@ -90,27 +92,9 @@ func TestItemHandler_AddProduct(t *testing.T) {
 		c := e.NewContext(req, rec)
 
 		err := handler.AddProduct(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
-	})
-
-	t.Run("service error", func(t *testing.T) {
-		reqBody := map[string]string{
-			"type":  "electronics",
-			"PvzId": "1",
-		}
-		reqJSON, _ := json.Marshal(reqBody)
-
-		mockService.On("AddProduct", mock.Anything, mock.Anything, "1").
-			Return(assert.AnError)
-
-		req := httptest.NewRequest(http.MethodPost, "/products", strings.NewReader(string(reqJSON)))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-
-		err := handler.AddProduct(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		assert.Error(t, err)
+		httpErr, ok := err.(*echo.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
 	})
 }

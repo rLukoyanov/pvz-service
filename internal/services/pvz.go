@@ -51,7 +51,6 @@ func (s *PVZService) GetAll(ctx context.Context, pageStr, limitStr, fromStr, toS
 		}
 	}
 
-	// TODO - добавить получение приемок и их товаров
 	PVZs, err := s.repos.PvzRepo.GetAll(ctx, limit, offset, from, to)
 	if err != nil {
 		return nil, errors.ErrInvalidInput
